@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publish-Subscribe Pattern: Stock Market Demo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📈 Stock Market Price Updates - Publish-Subscribe Pattern</h1>
+            <p class="subtitle">Demonstrating asynchronous, message-driven communication</p>
+        </header>
+
+        <div class="controls">
+            <div class="control-group">
+                <h3>Publisher Controls</h3>
+                <div class="button-group">
+                    <button id="startPublishing" class="btn btn-primary">Start Publishing</button>
+                    <button id="stopPublishing" class="btn btn-danger">Stop Publishing</button>
+                </div>
+                <div class="stock-selector">
+                    <label for="stockSymbol">Stock Symbol:</label>
+                    <select id="stockSymbol">
+                        <option value="AAPL">AAPL (Apple)</option>
+                        <option value="GOOGL">GOOGL (Google)</option>
+                        <option value="MSFT">MSFT (Microsoft)</option>
+                        <option value="TSLA">TSLA (Tesla)</option>
+                        <option value="AMZN">AMZN (Amazon)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>Subscriber Management</h3>
+                <div class="button-group">
+                    <button id="addSubscriber" class="btn btn-success">Add Subscriber</button>
+                    <button id="removeSubscriber" class="btn btn-warning">Remove Last Subscriber</button>
+                </div>
+                <div class="subscription-controls">
+                    <label for="subscriberSelect">Select Subscriber:</label>
+                    <select id="subscriberSelect"></select>
+                    <label for="topicSelect">Select Stock:</label>
+                    <select id="topicSelect">
+                        <option value="AAPL">AAPL</option>
+                        <option value="GOOGL">GOOGL</option>
+                        <option value="MSFT">MSFT</option>
+                        <option value="TSLA">TSLA</option>
+                        <option value="AMZN">AMZN</option>
+                    </select>
+                    <button id="subscribeBtn" class="btn btn-info">Subscribe</button>
+                    <button id="unsubscribeBtn" class="btn btn-secondary">Unsubscribe</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="publisher-section">
+                <h2>📢 Publisher Status</h2>
+                <div id="publisherStatus" class="status-box">
+                    <p>Status: <span id="publisherState">Stopped</span></p>
+                    <p>Current Stock: <span id="currentStock">AAPL</span></p>
+                </div>
+                <div id="latestUpdate" class="update-box">
+                    <h3>Latest Published Update</h3>
+                    <div id="latestUpdateContent">No updates yet</div>
+                </div>
+            </div>
+
+            <div class="subscribers-section">
+                <h2>👥 Subscribers</h2>
+                <div id="subscribersContainer" class="subscribers-grid">
+                    <!-- Subscribers will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="architecture-info">
+            <h2>🏗️ Architecture Overview</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>Broker</h3>
+                    <p>Central message broker that manages subscriptions and routes messages from publishers to subscribers.</p>
+                </div>
+                <div class="info-card">
+                    <h3>Publisher</h3>
+                    <p>Publishes stock price updates to the broker at regular intervals. Decoupled from subscribers.</p>
+                </div>
+                <div class="info-card">
+                    <h3>Subscriber</h3>
+                    <p>Receives updates from the broker for subscribed topics. Multiple subscribers can receive the same message.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
+
