@@ -108,10 +108,26 @@ header h1 {
     color: white;
 }
 
-.stock-selector, .subscription-controls {
+.stock-selector, .subscription-controls, .subscriber-name-input {
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+
+.subscriber-name-input input {
+    padding: 8px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.subscriber-name-input select {
+    padding: 8px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    background: white;
+    cursor: pointer;
 }
 
 .subscription-controls {

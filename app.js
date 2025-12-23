@@ -60,81 +60,16 @@ currentPublisher = publishers.get('AAPL');
 
 /**
  * DOM Element References
- * These elements are used to interact with the UI and display real-time updates
+ * These will be initialized when DOM is ready
  */
-const startPublishingBtn = document.getElementById('startPublishing');
-const stopPublishingBtn = document.getElementById('stopPublishing');
-const stockSymbolSelect = document.getElementById('stockSymbol');
-const addSubscriberBtn = document.getElementById('addSubscriber');
-const removeSubscriberBtn = document.getElementById('removeSubscriber');
-const subscriberSelect = document.getElementById('subscriberSelect');
-const topicSelect = document.getElementById('topicSelect');
-const subscribeBtn = document.getElementById('subscribeBtn');
-const unsubscribeBtn = document.getElementById('unsubscribeBtn');
-const publisherState = document.getElementById('publisherState');
-const currentStock = document.getElementById('currentStock');
-const latestUpdateContent = document.getElementById('latestUpdateContent');
-const subscribersContainer = document.getElementById('subscribersContainer');
+let startPublishingBtn, stopPublishingBtn, stockSymbolSelect;
+let addSubscriberBtn, removeSubscriberBtn, subscriberSelect, topicSelect;
+let subscribeBtn, unsubscribeBtn, publisherState, currentStock;
+let latestUpdateContent, subscribersContainer;
+let subscriberNameInput, defaultNamesSelect;
 
-/**
- * Event Listeners - Publisher Controls
- * 
- * These handlers demonstrate the publisher's ability to start/stop publishing
- * and switch between different stock symbols (topics)
- */
-
-/**
- * Start Publishing Handler
- * Initiates asynchronous price updates at regular intervals (2000ms)
- * When publishing starts, the publisher sends messages to the broker,
- * which then broadcasts them to all subscribed subscribers
- */
-startPublishingBtn.addEventListener('click', () => {
-    if (currentPublisher) {
-        currentPublisher.startPublishing(2000);
-        publisherState.textContent = 'Publishing';
-        publisherState.parentElement.classList.add('publishing');
-        updatePublisherStatus();
-    }
-});
-
-/**
- * Stop Publishing Handler
- * Stops the asynchronous publishing process
- * Note: Subscribers remain subscribed but won't receive new updates
- */
-stopPublishingBtn.addEventListener('click', () => {
-    if (currentPublisher) {
-        currentPublisher.stopPublishing();
-        publisherState.textContent = 'Stopped';
-        publisherState.parentElement.classList.remove('publishing');
-    }
-});
-
-/**
- * Stock Symbol Change Handler
- * Switches the active publisher to a different stock symbol
- * Demonstrates how publishers can be dynamically changed
- */
-stockSymbolSelect.addEventListener('change', (e) => {
-    const symbol = e.target.value;
-    if (currentPublisher) {
-        currentPublisher.stopPublishing();
-    }
-    currentPublisher = publishers.get(symbol);
-    currentStock.textContent = symbol;
-    updatePublisherStatus();
-    if (publisherState.textContent === 'Publishing') {
-        currentPublisher.startPublishing(2000);
-    }
-});
-
-/**
- * Event Listeners - Subscriber Management
- * 
- * These handlers demonstrate dynamic subscriber creation and subscription management,
- * showcasing the flexibility of the publish-subscribe pattern
- */
+// Track subscriber creation order for proper removal
+const subscriberCreationOrder = [];
 
 /**
  * Add Subscriber Handler
@@ -144,15 +79,30 @@ stockSymbolSelect.addEventListener('change', (e) => {
  * 2. Callback-based message handling (asynchronous notification)
  * 3. Automatic subscription to current stock for demo purposes
  */
-addSubscriberBtn.addEventListener('click', () => {
+function handleAddSubscriber() {
+    // Check if required elements are available
+    if (!subscriberNameInput || !subscriberSelect || !subscribersContainer) {
+        console.error('Required DOM elements not available for adding subscriber');
+        return;
+    }
+    
     subscriberCounter++;
+    
+    // Get subscriber name from input or use default
+    let subscriberName = subscriberNameInput.value.trim();
+    if (!subscriberName) {
+        subscriberName = `Subscriber ${subscriberCounter}`;
+    }
+    
+    const subscriberId = `sub-${subscriberCounter}`;
     const subscriber = new Subscriber(
-        `sub-${subscriberCounter}`,
-        `Subscriber ${subscriberCounter}`,
+        subscriberId,
+        subscriberName,
         broker
     );
     
     subscribers.set(subscriber.id, subscriber);
+    subscriberCreationOrder.push(subscriber.id); // Track creation order
     
     /**
      * Set up update callback for asynchronous message handling
@@ -173,20 +123,52 @@ addSubscriberBtn.addEventListener('click', () => {
     createSubscriberCard(subscriber);
     
     // Auto-subscribe to current stock for demonstration
-    subscriber.subscribe(stockSymbolSelect.value);
-    updateSubscriberCard(subscriber.id);
-});
+    if (stockSymbolSelect && stockSymbolSelect.value) {
+        subscriber.subscribe(stockSymbolSelect.value);
+        updateSubscriberCard(subscriber.id);
+    }
+    
+    // Clear input fields
+    subscriberNameInput.value = '';
+    if (defaultNamesSelect) {
+        defaultNamesSelect.value = '';
+    }
+    
+    // If publishing is active, trigger immediate update
+    if (currentPublisher && publisherState && publisherState.textContent === 'Publishing') {
+        // Force an immediate update to show subscription
+        // The broker's subscribe method already sends the last message,
+        // but we ensure it's displayed
+        setTimeout(() => {
+            updateSubscriberCard(subscriber.id);
+        }, 50);
+    }
+    
+    console.log(`Subscriber added: ${subscriberName} (${subscriberId})`);
+}
 
 /**
  * Remove Subscriber Handler
  * Removes the last created subscriber from the system
  * Demonstrates dynamic unsubscription and cleanup
  */
-removeSubscriberBtn.addEventListener('click', () => {
-    if (subscribers.size === 0) return;
+function handleRemoveSubscriber() {
+    if (subscribers.size === 0 || subscriberCreationOrder.length === 0) {
+        console.log('No subscribers to remove');
+        return;
+    }
     
-    const lastSubscriberId = Array.from(subscribers.keys())[subscribers.size - 1];
+    // Get the most recently added subscriber (last in creation order)
+    const lastSubscriberId = subscriberCreationOrder[subscriberCreationOrder.length - 1];
     const subscriber = subscribers.get(lastSubscriberId);
+    
+    if (!subscriber) {
+        console.warn(`Subscriber ${lastSubscriberId} not found in map`);
+        subscriberCreationOrder.pop(); // Clean up anyway
+        return;
+    }
+    
+    console.log(`Removing subscriber: ${subscriber.name} (${lastSubscriberId})`);
     
     // Unsubscribe from all topics before removal
     stockSymbols.forEach(symbol => {
@@ -195,24 +177,39 @@ removeSubscriberBtn.addEventListener('click', () => {
     
     // Remove from internal data structures
     subscribers.delete(lastSubscriberId);
+    subscriberCreationOrder.pop(); // Remove from creation order
     
     // Remove from dropdown
-    const option = Array.from(subscriberSelect.options).find(
-        opt => opt.value === lastSubscriberId
-    );
-    if (option) option.remove();
+    if (subscriberSelect) {
+        const option = Array.from(subscriberSelect.options).find(
+            opt => opt.value === lastSubscriberId
+        );
+        if (option) {
+            option.remove();
+        }
+        
+        // Clear selection if removed subscriber was selected
+        if (subscriberSelect.value === lastSubscriberId) {
+            subscriberSelect.value = '';
+        }
+    }
     
     // Remove visual card
     const card = document.getElementById(`subscriber-${lastSubscriberId}`);
-    if (card) card.remove();
-});
+    if (card) {
+        card.remove();
+        console.log(`Subscriber card removed: ${lastSubscriberId}`);
+    } else {
+        console.warn(`Card not found for subscriber: ${lastSubscriberId}`);
+    }
+}
 
 /**
  * Subscribe Handler
  * Allows a selected subscriber to subscribe to a specific stock symbol (topic)
  * Demonstrates runtime subscription management
  */
-subscribeBtn.addEventListener('click', () => {
+function handleSubscribe() {
     const subscriberId = subscriberSelect.value;
     const topic = topicSelect.value;
     
@@ -221,16 +218,22 @@ subscribeBtn.addEventListener('click', () => {
         if (subscriber) {
             subscriber.subscribe(topic);
             updateSubscriberCard(subscriberId);
+            
+            // Update card immediately - broker's subscribe already sends last message
+            // But we ensure UI is updated
+            setTimeout(() => {
+                updateSubscriberCard(subscriberId);
+            }, 50);
         }
     }
-});
+}
 
 /**
  * Unsubscribe Handler
  * Allows a selected subscriber to unsubscribe from a specific stock symbol (topic)
  * Demonstrates runtime unsubscription management
  */
-unsubscribeBtn.addEventListener('click', () => {
+function handleUnsubscribe() {
     const subscriberId = subscriberSelect.value;
     const topic = topicSelect.value;
     
@@ -241,7 +244,7 @@ unsubscribeBtn.addEventListener('click', () => {
             updateSubscriberCard(subscriberId);
         }
     }
-});
+}
 
 /**
  * UI Helper Functions
@@ -255,6 +258,19 @@ unsubscribeBtn.addEventListener('click', () => {
  * @param {Subscriber} subscriber - The subscriber instance to display
  */
 function createSubscriberCard(subscriber) {
+    // Check if subscribersContainer is available
+    if (!subscribersContainer) {
+        console.error('subscribersContainer is not available');
+        return;
+    }
+    
+    // Check if card already exists
+    const existingCard = document.getElementById(`subscriber-${subscriber.id}`);
+    if (existingCard) {
+        console.log(`Card for ${subscriber.id} already exists`);
+        return;
+    }
+    
     const card = document.createElement('div');
     card.id = `subscriber-${subscriber.id}`;
     card.className = 'subscriber-card';
@@ -274,6 +290,7 @@ function createSubscriberCard(subscriber) {
     `;
     
     subscribersContainer.appendChild(card);
+    console.log(`Subscriber card created for ${subscriber.name} (${subscriber.id})`);
     updateSubscriberCard(subscriber.id);
 }
 
@@ -289,11 +306,24 @@ function createSubscriberCard(subscriber) {
  */
 function updateSubscriberCard(subscriberId, topic = null, message = null) {
     const subscriber = subscribers.get(subscriberId);
-    if (!subscriber) return;
+    if (!subscriber) {
+        console.warn(`Subscriber ${subscriberId} not found`);
+        return;
+    }
     
     const card = document.getElementById(`subscriber-${subscriberId}`);
+    if (!card) {
+        console.warn(`Card for subscriber ${subscriberId} not found`);
+        return;
+    }
+    
     const subsElement = document.getElementById(`subs-${subscriberId}`);
     const msgElement = document.getElementById(`msg-${subscriberId}`);
+    
+    if (!subsElement || !msgElement) {
+        console.warn(`Elements for subscriber ${subscriberId} not found`);
+        return;
+    }
     
     // Update subscriptions
     const subscriptions = [];
@@ -348,7 +378,8 @@ const uiSubscriber = new Subscriber('ui-display', 'UI Display', broker);
  * to the subscribed topic, demonstrating asynchronous message-driven updates
  */
 uiSubscriber.setUpdateCallback((topic, message) => {
-    if (topic === currentPublisher?.symbol) {
+    // Always update the latest update content when a message is received
+    if (latestUpdateContent && message) {
         const changeClass = message.change >= 0 ? 'positive' : 'negative';
         const changeSign = message.change >= 0 ? '+' : '';
         
@@ -379,16 +410,92 @@ function updatePublisherStatus() {
 
 /**
  * Application Initialization
- * Sets up the initial state of the UI and creates a demo subscriber
+ * Sets up the initial state of the UI and all event listeners
+ * Wait for DOM to be fully loaded before initializing
  */
-updatePublisherStatus();
-currentStock.textContent = stockSymbolSelect.value;
+function initializeApp() {
+    // Get all DOM elements
+    startPublishingBtn = document.getElementById('startPublishing');
+    stopPublishingBtn = document.getElementById('stopPublishing');
+    stockSymbolSelect = document.getElementById('stockSymbol');
+    addSubscriberBtn = document.getElementById('addSubscriber');
+    removeSubscriberBtn = document.getElementById('removeSubscriber');
+    subscriberSelect = document.getElementById('subscriberSelect');
+    topicSelect = document.getElementById('topicSelect');
+    subscribeBtn = document.getElementById('subscribeBtn');
+    unsubscribeBtn = document.getElementById('unsubscribeBtn');
+    publisherState = document.getElementById('publisherState');
+    currentStock = document.getElementById('currentStock');
+    latestUpdateContent = document.getElementById('latestUpdateContent');
+    subscribersContainer = document.getElementById('subscribersContainer');
+    subscriberNameInput = document.getElementById('subscriberName');
+    defaultNamesSelect = document.getElementById('defaultNames');
+    
+    // Ensure all DOM elements are available
+    if (!startPublishingBtn || !stopPublishingBtn || !addSubscriberBtn || 
+        !removeSubscriberBtn || !subscriberSelect || !topicSelect || 
+        !subscribeBtn || !unsubscribeBtn || !publisherState || !currentStock || 
+        !latestUpdateContent || !subscribersContainer || !subscriberNameInput || !defaultNamesSelect) {
+        console.error('Some DOM elements are missing');
+        return;
+    }
+    
+    // Set up all event listeners
+    startPublishingBtn.addEventListener('click', () => {
+        if (currentPublisher) {
+            currentPublisher.startPublishing(2000);
+            publisherState.textContent = 'Publishing';
+            publisherState.parentElement.classList.add('publishing');
+            updatePublisherStatus();
+        }
+    });
+    
+    stopPublishingBtn.addEventListener('click', () => {
+        if (currentPublisher) {
+            currentPublisher.stopPublishing();
+            publisherState.textContent = 'Stopped';
+            publisherState.parentElement.classList.remove('publishing');
+        }
+    });
+    
+    stockSymbolSelect.addEventListener('change', (e) => {
+        const symbol = e.target.value;
+        if (currentPublisher) {
+            currentPublisher.stopPublishing();
+        }
+        currentPublisher = publishers.get(symbol);
+        currentStock.textContent = symbol;
+        updatePublisherStatus();
+        if (publisherState.textContent === 'Publishing') {
+            currentPublisher.startPublishing(2000);
+        }
+    });
+    
+    defaultNamesSelect.addEventListener('change', (e) => {
+        if (e.target.value) {
+            subscriberNameInput.value = e.target.value;
+        }
+    });
+    
+    addSubscriberBtn.addEventListener('click', handleAddSubscriber);
+    removeSubscriberBtn.addEventListener('click', handleRemoveSubscriber);
+    subscribeBtn.addEventListener('click', handleSubscribe);
+    unsubscribeBtn.addEventListener('click', handleUnsubscribe);
+    
+    // Initialize UI state
+    updatePublisherStatus();
+    if (currentStock) {
+        currentStock.textContent = stockSymbolSelect.value;
+    }
+    
+    console.log('Application initialized successfully');
+}
 
-/**
- * Create initial subscriber for demonstration purposes
- * This helps users immediately see the pattern in action
- */
-setTimeout(() => {
-    addSubscriberBtn.click();
-}, 500);
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    // DOM is already loaded
+    initializeApp();
+}
 

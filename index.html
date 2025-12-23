@@ -38,6 +38,20 @@
                     <button id="addSubscriber" class="btn btn-success">Add Subscriber</button>
                     <button id="removeSubscriber" class="btn btn-warning">Remove Last Subscriber</button>
                 </div>
+                <div class="subscriber-name-input" style="margin-bottom: 15px;">
+                    <label for="subscriberName">Subscriber Name:</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="subscriberName" placeholder="Enter name or select default" style="flex: 1; padding: 8px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px;">
+                        <select id="defaultNames" style="padding: 8px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px;">
+                            <option value="">Select Default Name</option>
+                            <option value="Trader 1">Trader 1</option>
+                            <option value="Analyst 1">Analyst 1</option>
+                            <option value="Investor 1">Investor 1</option>
+                            <option value="Portfolio Manager">Portfolio Manager</option>
+                            <option value="Market Watcher">Market Watcher</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="subscription-controls">
                     <label for="subscriberSelect">Select Subscriber:</label>
                     <select id="subscriberSelect"></select>
