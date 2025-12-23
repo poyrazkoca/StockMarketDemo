@@ -52,8 +52,6 @@ StockMarketDemo/
 4. **Switch Stocks**: Change the stock symbol to see topic-based message routing
 5. **Observe Updates**: Watch how multiple subscribers receive messages asynchronously
 
-For detailed demo instructions, see [DEMO_GUIDE.md](./DEMO_GUIDE.md)
-
 ## ✨ Key Features
 
 - ✅ **Decoupled Communication**: Publishers and subscribers don't know about each other
