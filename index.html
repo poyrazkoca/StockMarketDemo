@@ -81,16 +81,26 @@
             <div class="info-grid">
                 <div class="info-card">
                     <h3>Broker</h3>
-                    <p>Central message broker that manages subscriptions and routes messages from publishers to subscribers.</p>
+                    <p>Central message broker that manages subscriptions and routes messages from publishers to subscribers. Enables asynchronous, message-driven communication.</p>
                 </div>
                 <div class="info-card">
                     <h3>Publisher</h3>
-                    <p>Publishes stock price updates to the broker at regular intervals. Decoupled from subscribers.</p>
+                    <p>Publishes stock price updates to the broker at regular intervals. Decoupled from subscribers - doesn't know who receives the messages.</p>
                 </div>
                 <div class="info-card">
                     <h3>Subscriber</h3>
-                    <p>Receives updates from the broker for subscribed topics. Multiple subscribers can receive the same message.</p>
+                    <p>Receives updates from the broker for subscribed topics. Multiple subscribers can receive the same message simultaneously, demonstrating one-to-many communication.</p>
                 </div>
+            </div>
+            <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                <h3 style="color: #1976d2; margin-bottom: 10px;">📋 Demonstration Scenarios</h3>
+                <ul style="color: #555; line-height: 1.8;">
+                    <li><strong>Start Publishing:</strong> Click "Start Publishing" to begin asynchronous price updates</li>
+                    <li><strong>Add Subscribers:</strong> Create multiple subscribers to see one-to-many message distribution</li>
+                    <li><strong>Subscribe/Unsubscribe:</strong> Dynamically manage subscriptions to different stocks</li>
+                    <li><strong>Switch Stocks:</strong> Change the publisher's stock to see topic-based message routing</li>
+                    <li><strong>Real-time Updates:</strong> Watch subscribers receive messages asynchronously as they're published</li>
+                </ul>
             </div>
         </div>
     </div>
